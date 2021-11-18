@@ -41,8 +41,8 @@ pipeline{
             steps{
                 echo "Deploying application"
                 sh 'docker rm -f java-mvn-app'
-                sh ('docker run --rm -dp 4444:8080 --name java-mvn-app vipin0/java-mvn-app:$GIT_TAG')
-                echo "Application is live on <ip-address>:4444"
+                sh ('docker run --rm -dp 3000:8080 --name java-mvn-app vipin0/java-mvn-app:$GIT_TAG')
+                echo "Application is live on <ip-address>:3000"
             }
         }
     }
