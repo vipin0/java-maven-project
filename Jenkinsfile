@@ -3,6 +3,9 @@ pipeline{
     tools{
         maven 'Maven'
     }
+    environment {
+        GIT_TAG = "build-$BUILD_NUMBER"
+    }
     stages{
         stage('build war'){
             steps{
@@ -10,17 +13,35 @@ pipeline{
                 sh 'mvn clean package'
             }
         }
-        stage('build docker image'){
+        stage('create git tag'){
             steps{
-                echo "Buildind docker image"
-                sh 'docker build -t java-mvn:0.1 .'
+                sshagent (credentials: ['github-ssh-key']) {
+                    // sh 'git add .'
+                    // sh('git commit -m "bumped to $GIT_TAG"')
+                    sh "git tag -a $GIT_TAG -m 'Version $BUILD_NUMBER'"
+                    sh('git push git@github.com:vipin0/java-maven-project.git HEAD:$BRANCH_NAME --tag')
+                
+                }
+            }
+        }
+        stage('build and push docker image'){
+            steps{
+                withCredentials([
+                    usernamePassword(credentialsId: 'dockerhub-repo', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')
+                ]){
+                    sh('docker build -t $USERNAME/java-mvn-app:$GIT_TAG .')
+                    // don't use this
+//                     sh "echo $PASSWORD | docker login -u $USERNAME --password-stdin"   
+                    sh('echo $PASSWORD | docker login -u $USERNAME --password-stdin')
+                    sh('docker push $USERNAME/java-mvn-app:$GIT_TAG')
+                }
             }
         }
         stage('deploy'){
             steps{
                 echo "Deploying application"
                 sh 'docker rm -f java-mvn-app'
-                sh 'docker run --rm -dp 4444:8080 --name java-mvn-app java-mvn:0.1'
+                sh ('docker run --rm -dp 4444:8080 --name java-mvn-app vipin0/java-mvn-app:$GIT_TAG')
                 echo "Application is live on <ip-address>:4444"
             }
         }
