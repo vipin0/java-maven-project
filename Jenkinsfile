@@ -8,7 +8,7 @@ pipeline{
     stages{
          stage('DEV'){
             steps{
-                echo "Deploying to DEV environment"
+                echo "Deploying to DEV environment..."
                 sh "docker rm -f springboot-app-dev || true"
                 sh "docker run --rm -dp 4444:8080 --name springboot-app-dev vipin0/java-mvn:build-${params.BUILD_NUMBER}"
                 echo "Application live on <your-ip>:4444"
@@ -16,7 +16,7 @@ pipeline{
         }
       stage('QA'){
             steps{
-                echo "Deploying to QA environment"
+                echo "Deploying to QA environment..."
                 script {
                     env.APPROVE_QA = input message: 'Deploy to QA', ok: 'Continue',
                                 parameters: [choice(name: 'APPROVE_QA', choices: 'YES\nNO', description: 'Deploy from DEV to QA?')]
@@ -33,7 +33,8 @@ pipeline{
       }
       stage('CLEAN UP'){
             steps{
-                sh 'docker image prune'
+                echo "Removing dangling images..."
+                sh 'docker image prune -f'
             }
         }
     }
