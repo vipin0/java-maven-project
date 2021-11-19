@@ -16,8 +16,6 @@ pipeline{
         stage('create git tag'){
             steps{
                 sshagent (credentials: ['github-ssh-key']) {
-                    // sh 'git add .'
-                    // sh('git commit -m "bumped to $GIT_TAG"')
                     sh "git tag -a $GIT_TAG -m 'Version $BUILD_NUMBER'"
                     sh('git push git@github.com:vipin0/java-maven-project.git HEAD:$BRANCH_NAME --tag  --force')
                 
@@ -29,26 +27,17 @@ pipeline{
                 withCredentials([
                     usernamePassword(credentialsId: 'dockerhub-repo', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')
                 ]){
-                    sh('docker build -t $USERNAME/java-mvn:$GIT_TAG .')
-                    // don't use this
-//                     sh "echo $PASSWORD | docker login -u $USERNAME --password-stdin"   
+                    sh('docker build -t $USERNAME/java-mvn:$GIT_TAG .')   
                     sh('echo $PASSWORD | docker login -u $USERNAME --password-stdin')
                     sh('docker push $USERNAME/java-mvn:$GIT_TAG')
                 }
-            }
-        }
-        stage('deploy'){
-            steps{
-                echo "Deploying application"
-                // sh 'docker rm -f java-mvn-app-1'
-                // sh ('docker run --rm -dp 3000:8080 --name java-mvn-app-1 vipin0/java-mvn:$GIT_TAG')
-                // echo "Application is live on <ip-address>:3000"
             }
         }
     }
     post{
         success{
             archiveArtifacts artifacts: '**/target/*.war', followSymlinks: false
+            build job: 'asg-10-deploy-pipeline', parameters: [string(name: 'BUILD_NUMBER', value: "$BUILD_NUMBER")]
         }
     }
 }
