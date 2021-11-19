@@ -18,8 +18,8 @@ pipeline{
                 sshagent (credentials: ['github-ssh-key']) {
                     // sh 'git add .'
                     // sh('git commit -m "bumped to $GIT_TAG"')
-                    sh "git tag -a $GIT_TAG -m 'Version $BUILD_NUMBER' --force"
-                    sh('git push git@github.com:vipin0/java-maven-project.git HEAD:$BRANCH_NAME --tag')
+                    sh "git tag -a $GIT_TAG -m 'Version $BUILD_NUMBER'"
+                    sh('git push git@github.com:vipin0/java-maven-project.git HEAD:$BRANCH_NAME --tag  --force')
                 
                 }
             }
